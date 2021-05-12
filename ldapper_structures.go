@@ -25,6 +25,7 @@ type UserInfo struct {
 	Title      interface{} `json:"title"`          // user title
 	Photo      interface{} `json:"thumbnailPhoto"` // bad photo from AD
 
+	Company interface{} `json:"company"`
 	Address interface{} `json:"address"`
 	City    interface{} `json:"city"`
 	Index   interface{} `json:"index"`
