@@ -24,6 +24,14 @@ type UserInfo struct {
 	Mail       interface{} `json:"mail"`           // email
 	Title      interface{} `json:"title"`          // user title
 	Photo      interface{} `json:"thumbnailPhoto"` // bad photo from AD
+
+	Address interface{} `json:"address"`
+	City    interface{} `json:"city"`
+	Index   interface{} `json:"index"`
+	Country interface{} `json:"country"`
+	Room    interface{} `json:"room"`
+	Phone   interface{} `json:"phone"`
+	Manager interface{} `json:"manager"`
 }
 
 // Short info for showing.

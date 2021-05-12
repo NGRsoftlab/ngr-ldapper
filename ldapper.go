@@ -138,7 +138,8 @@ func ReadUserInfo(userName, domuser, dompassWord, host string,
 		attributes = []string{"cn", "departmentNumber", "mobile", "mail", "title", "jpegPhoto"}
 	} else {
 		filter = fmt.Sprintf(SearchFilterUserAd, userName)
-		attributes = []string{"cn", "department", "mobile", "mail", "title", "thumbnailPhoto"}
+		attributes = []string{"cn", "department", "mobile", "mail", "title", "thumbnailPhoto",
+			"manager", "telephoneNumber", "streetAddress", "l", "physicalDeliveryOfficeName", "postalCode", "co"}
 	}
 
 	searchRequest := ldap.NewSearchRequest(
@@ -160,6 +161,14 @@ func ReadUserInfo(userName, domuser, dompassWord, host string,
 			inf.Mobile = entry.GetAttributeValue("mobile")
 			inf.Mail = entry.GetAttributeValue("mail")
 			inf.Title = entry.GetAttributeValue("title")
+
+			inf.Manager = entry.GetAttributeValue("manager")
+			inf.Phone = entry.GetAttributeValue("telephoneNumber")
+			inf.Address = entry.GetAttributeValue("streetAddress")
+			inf.City = entry.GetAttributeValue("l")
+			inf.Room = entry.GetAttributeValue("physicalDeliveryOfficeName")
+			inf.Index = entry.GetAttributeValue("postalCode")
+			inf.Country = entry.GetAttributeValue("co")
 
 			if openLdap {
 				inf.Department = entry.GetAttributeValue("departmentNumber")
