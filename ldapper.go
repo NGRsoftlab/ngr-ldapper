@@ -72,8 +72,8 @@ func TryAccess(userName, passWord, host string, port interface{}, useTls bool) e
 	return err
 }
 
-// Test search in AD with basedn path.
-func TestBaseDn(userName, passWord, host string, port interface{}, basedn string, useTls, openLdap bool) error {
+// Test search in AD baseDn path.
+func TestBaseDn(userName, passWord, host string, port interface{}, baseDn string, useTls, openLdap bool) error {
 
 	conn, err := NewLdapConn(userName, passWord, host, port, useTls)
 	if err != nil {
@@ -82,15 +82,10 @@ func TestBaseDn(userName, passWord, host string, port interface{}, basedn string
 	}
 	defer func() { conn.Close() }()
 
-	var filter string
-	if openLdap {
-		filter = fmt.Sprintf(SearchFilterUserLinux, userName)
-	} else {
-		filter = fmt.Sprintf(SearchFilterUserAd, userName)
-	}
+	filter := FilterGroup
 
 	searchRequest := ldap.NewSearchRequest(
-		basedn,
+		baseDn,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		[]string{"cn"},
@@ -118,12 +113,12 @@ func TestBaseDn(userName, passWord, host string, port interface{}, basedn string
 }
 
 // Reading user info from AD.
-func ReadUserInfo(userName, domuser, dompassWord, host string,
-	port interface{}, basedn string, useTls, openLdap bool) (UserInfo, error) {
+func ReadUserInfo(userName, domUser, domPassWord, host string,
+	port interface{}, baseDn string, useTls, openLdap bool) (UserInfo, error) {
 
 	var inf UserInfo
 
-	conn, err := NewLdapConn(domuser, dompassWord, host, port, useTls)
+	conn, err := NewLdapConn(domUser, domPassWord, host, port, useTls)
 	if err != nil {
 		logging.Logger.Error(err)
 		return inf, err
@@ -157,7 +152,7 @@ func ReadUserInfo(userName, domuser, dompassWord, host string,
 	}
 
 	searchRequest := ldap.NewSearchRequest(
-		basedn,
+		baseDn,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		attributes,
@@ -209,7 +204,7 @@ func ReadUserInfo(userName, domuser, dompassWord, host string,
 
 // Reading root AD dirs (ou).
 func ReadRootGroups(userName, passWord, host string, port interface{},
-	basedn string, useTls, openLdap bool) ([]GroupInfo, error) {
+	baseDn string, useTls, openLdap bool) ([]GroupInfo, error) {
 
 	res := make([]GroupInfo, 0)
 
@@ -228,7 +223,7 @@ func ReadRootGroups(userName, passWord, host string, port interface{},
 	}
 
 	searchRequest := ldap.NewSearchRequest(
-		basedn,
+		baseDn,
 		ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
 		FilterGroup,
 		attributes,
@@ -260,7 +255,7 @@ func ReadRootGroups(userName, passWord, host string, port interface{},
 	return res, nil
 }
 
-// Reading AD subdirs in grp.
+// Reading AD subDirs in grp.
 func ReadSubGroups(userName, passWord, grp string, level int, host string,
 	port interface{}, useTls, openLdap bool) ([]GroupInfo, error) {
 
@@ -400,10 +395,10 @@ func RecursiveADSearch(prevLevel *[]GroupInfo, userName, passWord, host string, 
 
 // Reading full AD structure.
 func ReadAdStruct(userName, passWord, host string, port interface{},
-	basedn string, useTls, openLdap bool) (ADStruct, error) {
+	baseDn string, useTls, openLdap bool) (ADStruct, error) {
 	var res ADStruct
 
-	firstLevel, err := ReadRootGroups(userName, passWord, host, port, basedn, useTls, openLdap)
+	firstLevel, err := ReadRootGroups(userName, passWord, host, port, baseDn, useTls, openLdap)
 	if err != nil {
 		logging.Logger.Error(err)
 		return ADStruct{}, err
