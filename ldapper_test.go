@@ -6,8 +6,9 @@ import "testing"
 
 const (
 	// TODO: set real creds for ok tests (be careful with flags (useTls & openLdap))
-	okUser    = "test"
-	okDomUser = "cn=admin,dc=example,dc=com"
+	okUser = "test"
+	//okDomUser = "cn=admin,dc=example,dc=com" // openLdap
+	okDomUser = "admin@example.com"
 	okPsw     = "testtest"
 	okHost    = "127.0.0.1"
 	okPort    = 389
@@ -30,7 +31,7 @@ func TestReadUserInfo(t *testing.T) {
 	res, err := ReadUserInfo(okUser, okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, true)
+		false, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,7 +44,7 @@ func TestTestBaseDn(t *testing.T) {
 	err := TestBaseDn(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, true)
+		false, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -54,7 +55,7 @@ func TestReadRootGroups(t *testing.T) {
 	res, err := ReadRootGroups(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, true)
+		false, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -66,7 +67,7 @@ func TestReadAdStruct(t *testing.T) {
 	res, err := ReadAdStruct(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, true)
+		false, false)
 	if err != nil {
 		t.Error(err)
 	}
