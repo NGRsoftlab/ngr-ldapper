@@ -25,15 +25,19 @@ type ldapConn struct {
 }
 
 func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool) (*ldapConn, error) {
-	conn, err := ldap.Dial("tcp",
-		fmt.Sprintf("%s:%v", host, port))
-	if err != nil {
-		logging.Logger.Error(err)
-		return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
-	}
+	var conn *ldap.Conn
+	var err error
+
+	connString := fmt.Sprintf("%s:%v", host, port)
 
 	if useTls {
-		err = conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		conn, err = ldap.DialTLS("tcp", connString, &tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			logging.Logger.Error(err)
+			return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
+		}
+	} else {
+		conn, err = ldap.Dial("tcp", connString)
 		if err != nil {
 			logging.Logger.Error(err)
 			return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()

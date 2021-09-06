@@ -11,7 +11,7 @@ const (
 	okDomUser = "admin@example.com"
 	okPsw     = "testtest"
 	okHost    = "127.0.0.1"
-	okPort    = 389
+	okPort    = 636
 	okBaseDn  = "dc=example,dc=com"
 )
 
@@ -19,7 +19,7 @@ const (
 func TestTryAccess(t *testing.T) {
 	//t.Parallel()
 	err := TryAccess(okDomUser, okPsw,
-		okHost, okPort, false)
+		okHost, okPort, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -31,7 +31,7 @@ func TestReadUserInfo(t *testing.T) {
 	res, err := ReadUserInfo(okUser, okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, false)
+		true, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -44,7 +44,7 @@ func TestTestBaseDn(t *testing.T) {
 	err := TestBaseDn(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, false)
+		true, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestReadRootGroups(t *testing.T) {
 	res, err := ReadRootGroups(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, false)
+		true, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -67,7 +67,7 @@ func TestReadAdStruct(t *testing.T) {
 	res, err := ReadAdStruct(okDomUser, okPsw,
 		okHost, okPort,
 		okBaseDn,
-		false, false)
+		true, false)
 	if err != nil {
 		t.Error(err)
 	}
