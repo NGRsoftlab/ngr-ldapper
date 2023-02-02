@@ -5,39 +5,36 @@
 package ldapper
 
 import (
+	"crypto/tls"
+	"fmt"
+	"strings"
+
 	errorCustom "github.com/NGRsoftlab/error-lib"
 	"github.com/NGRsoftlab/ngr-logging"
 
-	"crypto/tls"
-	"fmt"
-	"github.com/go-ldap/ldap/v3"
-	"strings"
+	"github.com/go-ldap/ldap"
 )
 
 ///////////////////////////////////////////////
-type ldapConn struct {
+type LdapConn struct {
 	host       string
 	port       interface{}
 	user       string
 	password   string
 	useTLS     bool
-	connection *ldap.Conn
+	Connection *ldap.Conn
 }
 
-func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool) (*ldapConn, error) {
-	var conn *ldap.Conn
-	var err error
-
-	connString := fmt.Sprintf("%s:%v", host, port)
+func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool) (*LdapConn, error) {
+	conn, err := ldap.Dial("tcp",
+		fmt.Sprintf("%s:%v", host, port))
+	if err != nil {
+		logging.Logger.Error(err)
+		return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
+	}
 
 	if useTls {
-		conn, err = ldap.DialTLS("tcp", connString, &tls.Config{InsecureSkipVerify: true})
-		if err != nil {
-			logging.Logger.Error(err)
-			return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
-		}
-	} else {
-		conn, err = ldap.Dial("tcp", connString)
+		err = conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			logging.Logger.Error(err)
 			return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
@@ -50,19 +47,19 @@ func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool)
 		return nil, errorCustom.GlobalErrors.ErrBadAuthData()
 	}
 
-	return &ldapConn{
+	return &LdapConn{
 		host:       host,
 		port:       port,
 		user:       userName,
 		password:   passWord,
 		useTLS:     useTls,
-		connection: conn,
+		Connection: conn,
 	}, nil
 }
 
-func (conn *ldapConn) Close() {
-	if conn.connection != nil {
-		conn.connection.Close()
+func (conn *LdapConn) Close() {
+	if conn.Connection != nil {
+		conn.Connection.Close()
 	}
 }
 
@@ -96,7 +93,7 @@ func TestBaseDn(userName, passWord, host string, port interface{}, baseDn string
 		nil,
 	)
 
-	searchResult, err := conn.connection.Search(searchRequest)
+	searchResult, err := conn.Connection.Search(searchRequest)
 	if err != nil {
 		logging.Logger.Error(err)
 		return errorCustom.GlobalErrors.ErrBadBaseDn()
@@ -163,7 +160,7 @@ func ReadUserInfo(userName, domUser, domPassWord, host string,
 		nil,
 	)
 
-	searchResult, err := conn.connection.Search(searchRequest)
+	searchResult, err := conn.Connection.Search(searchRequest)
 	if err != nil {
 		logging.Logger.Warning(err)
 	}
@@ -234,7 +231,7 @@ func ReadRootGroups(userName, passWord, host string, port interface{},
 		nil,
 	)
 
-	searchResult, err := conn.connection.Search(searchRequest)
+	searchResult, err := conn.Connection.Search(searchRequest)
 	if err != nil {
 		logging.Logger.Error(err)
 		return res, errorCustom.GlobalErrors.ErrBadData()
@@ -287,7 +284,7 @@ func ReadSubGroups(userName, passWord, grp string, level int, host string,
 		nil,
 	)
 
-	searchResult, err := conn.connection.Search(searchRequest)
+	searchResult, err := conn.Connection.Search(searchRequest)
 	if err != nil {
 		logging.Logger.Error(err)
 		return res, errorCustom.GlobalErrors.ErrBadData()
@@ -347,7 +344,7 @@ func ReadGroupUsers(userName, passWord, grp, host string, port interface{}, useT
 		nil,
 	)
 
-	searchResult, err := conn.connection.Search(searchRequest)
+	searchResult, err := conn.Connection.Search(searchRequest)
 	if err != nil {
 		logging.Logger.Warning(err)
 	}
