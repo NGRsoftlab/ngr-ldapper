@@ -32,7 +32,7 @@ func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool)
 
 	if useTls {
 		uri = fmt.Sprintf("ldaps://%s:%v", host, port)
-		conn, err = ldap.DialURL(uri, ldap.DialWithTLSConfig(&tls.Config{ServerName: host}))
+		conn, err = ldap.DialURL(uri, ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: true}))
 	} else {
 		conn, err = ldap.DialURL(uri)
 	}
