@@ -1,21 +1,19 @@
 // Copyright 2020 NGR Softlab
 //
 // Ldap_common - pack with common ldap functions (working with Active Directory).
-//
 package ldapper
 
 import (
-	"crypto/tls"
 	"fmt"
 	"strings"
 
 	errorCustom "github.com/NGRsoftlab/error-lib"
 	"github.com/NGRsoftlab/ngr-logging"
 
-	"github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap/v3"
 )
 
-///////////////////////////////////////////////
+// /////////////////////////////////////////////
 type LdapConn struct {
 	host       string
 	port       interface{}
@@ -26,19 +24,16 @@ type LdapConn struct {
 }
 
 func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool) (*LdapConn, error) {
-	conn, err := ldap.Dial("tcp",
-		fmt.Sprintf("%s:%v", host, port))
+	var uri string
+	uri = fmt.Sprintf("ldap://%s:%v", host, port)
+	if useTls {
+		uri = fmt.Sprintf("ldaps://%s:%v", host, port)
+	}
+
+	conn, err := ldap.DialURL(uri)
 	if err != nil {
 		logging.Logger.Error(err)
 		return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
-	}
-
-	if useTls {
-		err = conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-		if err != nil {
-			logging.Logger.Error(err)
-			return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
-		}
 	}
 
 	err = conn.Bind(userName, passWord)
