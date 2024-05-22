@@ -4,6 +4,7 @@
 package ldapper
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strings"
 
@@ -25,12 +26,16 @@ type LdapConn struct {
 
 func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool) (*LdapConn, error) {
 	var uri string
+	var conn *ldap.Conn
+	var err error
 	uri = fmt.Sprintf("ldap://%s:%v", host, port)
+
 	if useTls {
 		uri = fmt.Sprintf("ldaps://%s:%v", host, port)
+		conn, err = ldap.DialURL(uri, ldap.DialWithTLSConfig(&tls.Config{ServerName: host}))
+	} else {
+		conn, err = ldap.DialURL(uri)
 	}
-
-	conn, err := ldap.DialURL(uri)
 	if err != nil {
 		logging.Logger.Error(err)
 		return nil, errorCustom.GlobalErrors.ErrBadIpOrPort()
@@ -54,7 +59,10 @@ func NewLdapConn(userName, passWord, host string, port interface{}, useTls bool)
 
 func (conn *LdapConn) Close() {
 	if conn.Connection != nil {
-		conn.Connection.Close()
+		err := conn.Connection.Close()
+		if err != nil {
+			return
+		}
 	}
 }
 
