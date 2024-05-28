@@ -5,11 +5,11 @@ Lib for working with ldap
 
 ```
 import (
-    ldapper "github.com/NGRsoftlab/ngr-ldapper/v2"
+    ldapper "github.com/NGRsoftlab/ngr-ldapper"
 )
 ```
 
-or (if you want v1)
+or (if you want ^^)
 
 ```
 import (
@@ -17,7 +17,7 @@ import (
 )
 ```
 
-# example v2 (new, get struct, get userInfo)
+# examples (new, get struct, get userInfo)
 ```
 // create new ldap connection
 conn, err := NewLdapConn(user, password,host, port,
@@ -43,7 +43,7 @@ fmt.Println(userInfo)
 ```
 
 
-# example v1 (old, get struct, get userInfo)
+# examples (old, get struct, get userInfo)
 ```
 // open-close new conn is inside
 ADStruct, err := ReadAdStruct(user, password,
