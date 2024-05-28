@@ -1,32 +1,32 @@
 // Copyright 2020-2024 NGR Softlab
 package ldapper
 
-// UserFullInfo User full info from AD struct
-type UserFullInfo struct {
-	CN         string `json:"cn"` // full name
-	Department string `json:"department"`
-	Mobile     string `json:"mobile"`         // mobile phone
-	Mail       string `json:"mail"`           // email
-	Title      string `json:"title"`          // user title
-	Photo      string `json:"thumbnailPhoto"` // bad photo from AD
+// UserInfo User info from AD struct.
+type UserInfo struct {
+	CN         interface{} `json:"cn"` // full name
+	Department interface{} `json:"department"`
+	Mobile     interface{} `json:"mobile"`         // mobile phone
+	Mail       interface{} `json:"mail"`           // email
+	Title      interface{} `json:"title"`          // user title
+	Photo      interface{} `json:"thumbnailPhoto"` // bad photo from AD
 
-	Company string `json:"company"`
-	Address string `json:"address"`
-	City    string `json:"city"`
-	Index   string `json:"index"`
-	Country string `json:"country"`
-	Room    string `json:"room"`
-	Phone   string `json:"phone"`
-	Manager string `json:"manager"`
+	Company interface{} `json:"company"`
+	Address interface{} `json:"address"`
+	City    interface{} `json:"city"`
+	Index   interface{} `json:"index"`
+	Country interface{} `json:"country"`
+	Room    interface{} `json:"room"`
+	Phone   interface{} `json:"phone"`
+	Manager interface{} `json:"manager"`
 }
 
-// UserShortInfo Short info for showing somewhere in lists (light info list)
-type UserShortInfo struct {
-	Name       string `json:"name"` // full name (= cn)
-	Login      string `json:"login"`
-	Mail       string `json:"mail"`
-	Title      string `json:"title"`
-	Department string `json:"department"`
+// ImportInfo Short info for showing.
+type ImportInfo struct {
+	Name       interface{} `json:"name"` // full name (= cn)
+	Login      interface{} `json:"login"`
+	Mail       interface{} `json:"mail"`
+	Title      interface{} `json:"title"`
+	Department interface{} `json:"department"`
 }
 
 // GroupInfo Department obj from AD struct.
