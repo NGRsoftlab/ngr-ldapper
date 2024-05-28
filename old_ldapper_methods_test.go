@@ -14,13 +14,16 @@ import (
 	To check real work - you need to put real params into test case (ip, port, user, pass, etc.)
 */
 
-func TestNewLdapConn(t *testing.T) {
+func TestReadUserInfo(t *testing.T) {
 	type ConnParams struct {
 		host     string
 		port     interface{}
 		user     string
+		domUser  string
 		password string
 		useTLS   bool
+		openLDAP bool
+		baseDN   string
 	}
 
 	tests := []struct {
@@ -57,66 +60,9 @@ func TestNewLdapConn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn, err := NewLdapConn(tt.params.user, tt.params.password,
+			_, err := ReadUserInfo(tt.params.user, tt.params.domUser, tt.params.password,
 				tt.params.host, tt.params.port,
-				tt.params.useTLS)
-			if tt.mustFail {
-				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
-			} else {
-				defer func() { conn.Close() }()
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestTryAccess(t *testing.T) {
-	type ConnParams struct {
-		host     string
-		port     interface{}
-		user     string
-		password string
-		useTLS   bool
-	}
-
-	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
-	}{
-		{
-			name: "invalid notls",
-			params: ConnParams{
-				host:     "test.ru",
-				port:     389,
-				user:     "test",
-				password: "test",
-				useTLS:   false,
-			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
-		},
-		{
-			name: "invalid tls",
-			params: ConnParams{
-				host:     "test.ru",
-				port:     636,
-				user:     "test",
-				password: "test",
-				useTLS:   true,
-			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := TryAccess(tt.params.user, tt.params.password,
-				tt.params.host, tt.params.port,
-				tt.params.useTLS)
+				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
 				assert.Equal(t, tt.failError.Error(), err.Error())
@@ -127,7 +73,7 @@ func TestTryAccess(t *testing.T) {
 	}
 }
 
-func TestTestBaseDn(t *testing.T) {
+func TestReadRootGroups(t *testing.T) {
 	type ConnParams struct {
 		host     string
 		port     interface{}
@@ -172,7 +118,7 @@ func TestTestBaseDn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := TestBaseDn(tt.params.user, tt.params.password,
+			_, err := ReadRootGroups(tt.params.user, tt.params.password,
 				tt.params.host, tt.params.port,
 				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
@@ -185,16 +131,16 @@ func TestTestBaseDn(t *testing.T) {
 	}
 }
 
-func TestGetUserInfo(t *testing.T) {
+func TestReadSubGroups(t *testing.T) {
 	type ConnParams struct {
-		host       string
-		port       interface{}
-		user       string
-		password   string
-		useTLS     bool
-		openLDAP   bool
-		baseDN     string
-		userToFind string
+		host     string
+		port     interface{}
+		user     string
+		password string
+		useTLS   bool
+		openLDAP bool
+		group    string
+		level    int
 	}
 
 	tests := []struct {
@@ -206,55 +152,156 @@ func TestGetUserInfo(t *testing.T) {
 		{
 			name: "invalid notls",
 			params: ConnParams{
-				host:       "192.168.189.2",
-				port:       389,
-				user:       "dataplan@ngrsoftlab.ru",
-				password:   "d8hELYed9L809RB9FkSO!",
-				useTLS:     false,
-				baseDN:     "OU=Employees,DC=ngrsoftlab,DC=ru",
-				userToFind: "m.gavrilenko",
+				host:     "test.ru",
+				port:     389,
+				user:     "test",
+				password: "test",
+				useTLS:   false,
 			},
-			mustFail:  false,
+			mustFail:  true,
 			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
 		},
 		{
 			name: "invalid tls",
 			params: ConnParams{
-				host:       "192.168.189.2",
-				port:       636,
-				user:       "dataplan@ngrsoftlab.ru",
-				password:   "d8hELYed9L809RB9FkSO!",
-				useTLS:     true,
-				baseDN:     "OU=Employees,DC=ngrsoftlab,DC=ru",
-				userToFind: "m.gavrilenko",
+				host:     "test.ru",
+				port:     636,
+				user:     "test",
+				password: "test",
+				useTLS:   true,
 			},
-			mustFail:  false,
+			mustFail:  true,
 			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conn, err := NewLdapConn(tt.params.user, tt.params.password,
-				tt.params.host, tt.params.port,
-				tt.params.useTLS, LdapConnOptions{openLDAP: tt.params.openLDAP})
+			_, err := ReadSubGroups(tt.params.user, tt.params.password, tt.params.group,
+				tt.params.level, tt.params.host, tt.params.port,
+				tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
 				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
-				defer func() { conn.Close() }()
 				require.NoError(t, err)
-
-				res, err := conn.GetUserInfo(tt.params.userToFind, tt.params.baseDN)
-				if tt.mustFail {
-					require.Error(t, err)
-					assert.Equal(t, tt.failError.Error(), err.Error())
-				} else {
-					require.NoError(t, err)
-					t.Log(res)
-				}
 			}
+		})
+	}
+}
 
+func TestReadGroupUsers(t *testing.T) {
+	type ConnParams struct {
+		host     string
+		port     interface{}
+		user     string
+		password string
+		useTLS   bool
+		openLDAP bool
+		group    string
+	}
+
+	tests := []struct {
+		name      string
+		params    ConnParams
+		mustFail  bool
+		failError error
+	}{
+		{
+			name: "invalid notls",
+			params: ConnParams{
+				host:     "test.ru",
+				port:     389,
+				user:     "test",
+				password: "test",
+				useTLS:   false,
+			},
+			mustFail:  true,
+			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+		},
+		{
+			name: "invalid tls",
+			params: ConnParams{
+				host:     "test.ru",
+				port:     636,
+				user:     "test",
+				password: "test",
+				useTLS:   true,
+			},
+			mustFail:  true,
+			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ReadGroupUsers(tt.params.user, tt.params.password, tt.params.group,
+				tt.params.host, tt.params.port,
+				tt.params.useTLS, tt.params.openLDAP)
+			if tt.mustFail {
+				require.Error(t, err)
+				assert.Equal(t, tt.failError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestReadAdStruct(t *testing.T) {
+	type ConnParams struct {
+		host     string
+		port     interface{}
+		user     string
+		password string
+		useTLS   bool
+		openLDAP bool
+		baseDN   string
+	}
+
+	tests := []struct {
+		name      string
+		params    ConnParams
+		mustFail  bool
+		failError error
+	}{
+		{
+			name: "invalid notls",
+			params: ConnParams{
+				host:     "test.ru",
+				port:     389,
+				user:     "test",
+				password: "test",
+				useTLS:   false,
+			},
+			mustFail:  true,
+			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+		},
+		{
+			name: "invalid tls",
+			params: ConnParams{
+				host:     "test.ru",
+				port:     636,
+				user:     "test",
+				password: "test",
+				useTLS:   true,
+			},
+			mustFail:  true,
+			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ReadAdStruct(tt.params.user, tt.params.password,
+				tt.params.host, tt.params.port,
+				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
+			if tt.mustFail {
+				require.Error(t, err)
+				assert.Equal(t, tt.failError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }
