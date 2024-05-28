@@ -1,4 +1,4 @@
-module github.com/NGRsoftlab/ngr-ldapper
+module github.com/NGRsoftlab/ngr-ldapper/v2
 
 go 1.22.3
 
