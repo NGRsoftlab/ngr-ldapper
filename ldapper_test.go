@@ -205,7 +205,7 @@ func TestGetUserInfo(t *testing.T) {
 				baseDN:     "OU=test,DC=test,DC=ru",
 				userToFind: "test",
 			},
-			mustFail: false,
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -218,7 +218,7 @@ func TestGetUserInfo(t *testing.T) {
 				baseDN:     "OU=test,DC=test,DC=ru",
 				userToFind: "test",
 			},
-			mustFail: false,
+			mustFail: true,
 		},
 	}
 
