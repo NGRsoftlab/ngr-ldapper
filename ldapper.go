@@ -128,16 +128,43 @@ func TestBaseDn(userName, passWord,
 
 ////////////////////////////////////////////// Get info methods
 
-func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, err error) {
+// ReadUserInfo Reading user info from AD
+func ReadUserInfo(userName, domUser, domPassWord,
+	host string, port interface{},
+	baseDn string, useTls, openLdap bool) (UserInfo, error) {
+
+	var inf UserInfo
+
+	conn, err := NewLdapConn(domUser, domPassWord, host, port, useTls)
+	if err != nil {
+		return inf, err
+	}
+	defer func() { conn.Close() }()
+
 	var filter string
 	var attributes = make([]string, 0)
 
-	if conn.options.openLDAP {
+	if openLdap {
 		filter = fmt.Sprintf(searchFilterUserOpenLDAP, userName)
-		attributes = openLDAPUserAttrs
+		attributes = []string{"cn", "departmentNumber", "mobile", "mail", "title", "jpegPhoto"}
 	} else {
 		filter = fmt.Sprintf(searchFilterUserAD, userName)
-		attributes = ADUserAttrs
+		attributes = []string{
+			"cn",
+			"department",
+			"mobile",
+			"mail",
+			"title",
+			"thumbnailPhoto",
+			"manager",
+			"telephoneNumber",
+			"streetAddress",
+			"l",
+			"physicalDeliveryOfficeName",
+			"postalCode",
+			"co",
+			"company",
+		}
 	}
 
 	searchRequest := ldap.NewSearchRequest(
@@ -152,131 +179,58 @@ func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, er
 
 	if searchResult != nil {
 		for _, entry := range searchResult.Entries {
-			res.CN = entry.GetAttributeValue("cn")
-			res.Mobile = entry.GetAttributeValue("mobile")
-			res.Mail = entry.GetAttributeValue("mail")
-			res.Title = entry.GetAttributeValue("title")
+			inf.CN = entry.GetAttributeValue("cn")
+			inf.Mobile = entry.GetAttributeValue("mobile")
+			inf.Mail = entry.GetAttributeValue("mail")
+			inf.Title = entry.GetAttributeValue("title")
 
-			res.Manager = entry.GetAttributeValue("manager")
-			res.Phone = entry.GetAttributeValue("telephoneNumber")
-			res.Address = entry.GetAttributeValue("streetAddress")
-			res.City = entry.GetAttributeValue("l")
-			res.Room = entry.GetAttributeValue("physicalDeliveryOfficeName")
-			res.Index = entry.GetAttributeValue("postalCode")
-			res.Country = entry.GetAttributeValue("co")
-			res.Company = entry.GetAttributeValue("company")
+			inf.Manager = entry.GetAttributeValue("manager")
+			inf.Phone = entry.GetAttributeValue("telephoneNumber")
+			inf.Address = entry.GetAttributeValue("streetAddress")
+			inf.City = entry.GetAttributeValue("l")
+			inf.Room = entry.GetAttributeValue("physicalDeliveryOfficeName")
+			inf.Index = entry.GetAttributeValue("postalCode")
+			inf.Country = entry.GetAttributeValue("co")
+			inf.Company = entry.GetAttributeValue("company")
 
-			if conn.options.openLDAP {
-				res.Department = entry.GetAttributeValue("departmentNumber")
-				res.Photo = entry.GetAttributeValue("jpegPhoto")
+			if openLdap {
+				inf.Department = entry.GetAttributeValue("departmentNumber")
+				inf.Photo = entry.GetAttributeValue("jpegPhoto")
 			} else {
-				res.Department = entry.GetAttributeValue("department")
-				res.Photo = entry.GetAttributeValue("thumbnailPhoto")
+				inf.Department = entry.GetAttributeValue("department")
+				inf.Photo = entry.GetAttributeValue("thumbnailPhoto")
 			}
 		}
 	}
 
 	// for no Name users cases
-	if res.CN == "" {
-		res.CN = userName
+	if inf.CN == nil {
+		inf.CN = userName
 	}
 
-	return res, err
-}
-
-func (conn *LdapConn) GetGroupUsers(group string) (res []UserShortInfo, err error) {
-	res = make([]UserShortInfo, 0)
-
-	var filter string
-	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
-		filter = filterUserOpenLDAP
-		attributes = openLDAPGroupUserAttrs
-	} else {
-		filter = filterUserAD
-		attributes = ADGroupUserAttrs
-	}
-
-	searchRequest := ldap.NewSearchRequest(
-		group,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		filter,
-		attributes,
-		nil,
-	)
-
-	searchResult, err := conn.Connection.Search(searchRequest)
-
-	if searchResult != nil {
-		for _, entry := range searchResult.Entries {
-
-			var inf UserShortInfo
-
-			inf.Name = entry.GetAttributeValue("cn")
-			inf.Mail = entry.GetAttributeValue("mail")
-			inf.Title = entry.GetAttributeValue("title")
-
-			if conn.options.openLDAP {
-				inf.Login = entry.GetAttributeValue("uid")
-				inf.Department = entry.GetAttributeValue("departmentNumber")
-			} else {
-				inf.Login = entry.GetAttributeValue("userPrincipalName")
-				inf.Department = entry.GetAttributeValue("department")
-			}
-
-			// for no Name users cases
-			if inf.Name == "" {
-				inf.Name = "NoName"
-			}
-
-			res = append(res, inf)
-		}
-	}
-
-	return res, err
+	return inf, nil
 }
 
 ////////////////////////////////////////////// Get struct methods
 
-// GetStruct Reading full AD structure (with depth 2)
-func (conn *LdapConn) GetStruct(baseDn string) (res ADStruct, err error) {
-	firstLevel, err := conn.GetRootGroups(baseDn)
+// ReadRootGroups Reading root AD dirs (ou)
+func ReadRootGroups(userName, passWord,
+	host string, port interface{},
+	baseDn string, useTls, openLdap bool) ([]GroupInfo, error) {
+
+	res := make([]GroupInfo, 0)
+
+	conn, err := NewLdapConn(userName, passWord, host, port, useTls)
 	if err != nil {
-		return ADStruct{}, err
+		return res, err
 	}
-
-	if firstLevel != nil {
-		_ = conn.GetRecursiveSearchResult(&firstLevel, 2)
-		res.AD = firstLevel
-	}
-
-	return res, nil
-}
-
-// GetRecursiveSearchResult - run recursive search in AD (group->subgroup->etc.), return groups tree info
-func (conn *LdapConn) GetRecursiveSearchResult(prevLevel *[]GroupInfo, level int) *[]GroupInfo {
-	nextLevel := make([]GroupInfo, 0)
-	for k, v := range *prevLevel {
-		nextLevel, _ := conn.GetSubGroups(v.DName, ldap.ScopeSingleLevel)
-		if nextLevel != nil {
-			if level < DepthOfLdapSearch {
-				conn.GetRecursiveSearchResult(&nextLevel, level+1)
-			}
-			(*prevLevel)[k].Has = nextLevel
-		}
-	}
-	return &nextLevel
-}
-
-// GetRootGroups Reading root AD folders (ou)
-func (conn *LdapConn) GetRootGroups(baseDn string) (res []GroupInfo, err error) {
-	res = make([]GroupInfo, 0)
+	defer func() { conn.Close() }()
 
 	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
-		attributes = openLDAPGroupAttrs
+	if openLdap {
+		attributes = []string{"ou"}
 	} else {
-		attributes = ADGroupAttrs
+		attributes = []string{"name", "ou", "distinguishedName"}
 	}
 
 	searchRequest := ldap.NewSearchRequest(
@@ -297,7 +251,7 @@ func (conn *LdapConn) GetRootGroups(baseDn string) (res []GroupInfo, err error) 
 
 		inf.Ou = entry.GetAttributeValue("ou")
 
-		if conn.options.openLDAP {
+		if openLdap {
 			inf.Name = inf.Ou
 			inf.DName = entry.DN
 		} else {
@@ -311,19 +265,28 @@ func (conn *LdapConn) GetRootGroups(baseDn string) (res []GroupInfo, err error) 
 	return res, nil
 }
 
-// GetSubGroups Reading AD subFolders in group
-func (conn *LdapConn) GetSubGroups(group string, level int) (res []GroupInfo, err error) {
-	res = make([]GroupInfo, 0)
+// ReadSubGroups Reading AD subDirs in group
+func ReadSubGroups(userName, passWord, grp string,
+	level int, host string, port interface{},
+	useTls, openLdap bool) ([]GroupInfo, error) {
+
+	res := make([]GroupInfo, 0)
+
+	conn, err := NewLdapConn(userName, passWord, host, port, useTls)
+	if err != nil {
+		return res, err
+	}
+	defer func() { conn.Close() }()
 
 	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
-		attributes = openLDAPGroupAttrs
+	if openLdap {
+		attributes = []string{"ou"}
 	} else {
-		attributes = ADGroupAttrs
+		attributes = []string{"name", "ou", "distinguishedName"}
 	}
 
 	searchRequest := ldap.NewSearchRequest(
-		group,
+		grp,
 		level, ldap.NeverDerefAliases, 0, 0, false,
 		filterGroup,
 		attributes,
@@ -339,7 +302,7 @@ func (conn *LdapConn) GetSubGroups(group string, level int) (res []GroupInfo, er
 		var inf GroupInfo
 		inf.Ou = entry.GetAttributeValue("ou")
 
-		if conn.options.openLDAP {
+		if openLdap {
 			inf.Name = inf.Ou
 			inf.DName = entry.DN
 		} else {
@@ -350,9 +313,109 @@ func (conn *LdapConn) GetSubGroups(group string, level int) (res []GroupInfo, er
 		// Needed for recursive AD struct search
 		inf.Has = make([]GroupInfo, 0)
 
-		if strings.Contains(inf.DName, group) && inf.DName != group {
+		if strings.Contains(inf.DName, grp) && inf.DName != grp {
 			res = append(res, inf)
 		}
+	}
+
+	return res, nil
+}
+
+// ReadGroupUsers Reading all users from group
+func ReadGroupUsers(userName, passWord, grp,
+	host string, port interface{},
+	useTls, openLdap bool) ([]ImportInfo, error) {
+
+	res := make([]ImportInfo, 0)
+
+	conn, err := NewLdapConn(userName, passWord, host, port, useTls)
+	if err != nil {
+		return res, err
+	}
+	defer func() { conn.Close() }()
+
+	var filter string
+	var attributes = make([]string, 0)
+	if openLdap {
+		filter = filterUserOpenLDAP
+		attributes = []string{"cn", "mail", "uid", "title", "departmentNumber"}
+	} else {
+		filter = filterUserAD
+		attributes = []string{"cn", "mail", "userPrincipalName", "title", "department"}
+	}
+
+	searchRequest := ldap.NewSearchRequest(
+		grp,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		attributes,
+		nil,
+	)
+
+	searchResult, err := conn.Connection.Search(searchRequest)
+
+	if searchResult != nil {
+		for _, entry := range searchResult.Entries {
+
+			var inf ImportInfo
+
+			inf.Name = entry.GetAttributeValue("cn")
+			inf.Mail = entry.GetAttributeValue("mail")
+			inf.Title = entry.GetAttributeValue("title")
+
+			if openLdap {
+				inf.Login = entry.GetAttributeValue("uid")
+				inf.Department = entry.GetAttributeValue("departmentNumber")
+			} else {
+				inf.Login = entry.GetAttributeValue("userPrincipalName")
+				inf.Department = entry.GetAttributeValue("department")
+			}
+
+			// for no Name users cases
+			if inf.Name == nil {
+				inf.Name = "NoName"
+			}
+
+			res = append(res, inf)
+		}
+	}
+
+	return res, nil
+}
+
+// RecursiveADSearch - run recursive search in AD (group->subgroup->etc.)
+func RecursiveADSearch(prevLevel *[]GroupInfo,
+	userName, passWord,
+	host string, port interface{},
+	useTls, openLdap bool,
+	level int) *[]GroupInfo {
+
+	nextLevel := make([]GroupInfo, 0)
+	for k, v := range *prevLevel {
+		nextLevel, _ := ReadSubGroups(userName, passWord, v.DName, ldap.ScopeSingleLevel, host, port, useTls, openLdap)
+		if nextLevel != nil {
+			if level < DepthOfLdapSearch {
+				RecursiveADSearch(&nextLevel, userName, passWord, host, port, useTls, openLdap, level+1)
+			}
+			(*prevLevel)[k].Has = nextLevel
+		}
+	}
+	return &nextLevel
+}
+
+// ReadAdStruct Reading full AD structure (with depth 2)
+func ReadAdStruct(userName, passWord, host string, port interface{},
+	baseDn string, useTls, openLdap bool) (ADStruct, error) {
+	var res ADStruct
+
+	firstLevel, err := ReadRootGroups(userName, passWord, host, port, baseDn, useTls, openLdap)
+	if err != nil {
+		return ADStruct{}, err
+	}
+
+	if firstLevel != nil {
+		_ = RecursiveADSearch(&firstLevel, userName, passWord, host, port, useTls, openLdap, 2)
+		res.AD = firstLevel
 	}
 
 	return res, nil
