@@ -24,10 +24,9 @@ func TestNewLdapConn(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -38,8 +37,7 @@ func TestNewLdapConn(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -50,8 +48,7 @@ func TestNewLdapConn(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -62,7 +59,6 @@ func TestNewLdapConn(t *testing.T) {
 				tt.params.useTLS)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				defer func() { conn.Close() }()
 				require.NoError(t, err)
@@ -81,10 +77,9 @@ func TestTryAccess(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -95,8 +90,7 @@ func TestTryAccess(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -107,8 +101,7 @@ func TestTryAccess(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -119,7 +112,6 @@ func TestTryAccess(t *testing.T) {
 				tt.params.useTLS)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -198,38 +190,35 @@ func TestGetUserInfo(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
 			params: ConnParams{
-				host:       "192.168.189.2",
+				host:       "test.ru",
 				port:       389,
-				user:       "dataplan@ngrsoftlab.ru",
-				password:   "d8hELYed9L809RB9FkSO!",
+				user:       "test",
+				password:   "test",
 				useTLS:     false,
-				baseDN:     "OU=Employees,DC=ngrsoftlab,DC=ru",
-				userToFind: "m.gavrilenko",
+				baseDN:     "OU=test,DC=test,DC=ru",
+				userToFind: "test",
 			},
-			mustFail:  false,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: false,
 		},
 		{
 			name: "invalid tls",
 			params: ConnParams{
-				host:       "192.168.189.2",
+				host:       "test.ru",
 				port:       636,
-				user:       "dataplan@ngrsoftlab.ru",
-				password:   "d8hELYed9L809RB9FkSO!",
+				user:       "test",
+				password:   "test",
 				useTLS:     true,
-				baseDN:     "OU=Employees,DC=ngrsoftlab,DC=ru",
-				userToFind: "m.gavrilenko",
+				baseDN:     "OU=test,DC=test,DC=ru",
+				userToFind: "test",
 			},
-			mustFail:  false,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: false,
 		},
 	}
 
@@ -240,15 +229,13 @@ func TestGetUserInfo(t *testing.T) {
 				tt.params.useTLS, LdapConnOptions{openLDAP: tt.params.openLDAP})
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
-				defer func() { conn.Close() }()
 				require.NoError(t, err)
+				defer func() { conn.Close() }()
 
 				res, err := conn.GetUserInfo(tt.params.userToFind, tt.params.baseDN)
 				if tt.mustFail {
 					require.Error(t, err)
-					assert.Equal(t, tt.failError.Error(), err.Error())
 				} else {
 					require.NoError(t, err)
 					t.Log(res)

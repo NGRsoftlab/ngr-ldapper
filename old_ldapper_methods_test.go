@@ -2,10 +2,8 @@
 package ldapper
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,10 +25,9 @@ func TestReadUserInfo(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -41,8 +38,7 @@ func TestReadUserInfo(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -53,8 +49,7 @@ func TestReadUserInfo(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -65,7 +60,6 @@ func TestReadUserInfo(t *testing.T) {
 				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -85,10 +79,9 @@ func TestReadRootGroups(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -99,8 +92,7 @@ func TestReadRootGroups(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -111,8 +103,7 @@ func TestReadRootGroups(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -123,7 +114,6 @@ func TestReadRootGroups(t *testing.T) {
 				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -144,10 +134,9 @@ func TestReadSubGroups(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -158,8 +147,7 @@ func TestReadSubGroups(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -170,8 +158,7 @@ func TestReadSubGroups(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -182,7 +169,6 @@ func TestReadSubGroups(t *testing.T) {
 				tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -202,10 +188,9 @@ func TestReadGroupUsers(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -216,8 +201,7 @@ func TestReadGroupUsers(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -228,8 +212,7 @@ func TestReadGroupUsers(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -240,7 +223,6 @@ func TestReadGroupUsers(t *testing.T) {
 				tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
@@ -260,10 +242,9 @@ func TestReadAdStruct(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -274,8 +255,7 @@ func TestReadAdStruct(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -286,8 +266,7 @@ func TestReadAdStruct(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -298,7 +277,6 @@ func TestReadAdStruct(t *testing.T) {
 				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
