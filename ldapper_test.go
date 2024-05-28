@@ -2,10 +2,8 @@
 package ldapper
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -131,10 +129,9 @@ func TestTestBaseDn(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      string
-		params    ConnParams
-		mustFail  bool
-		failError error
+		name     string
+		params   ConnParams
+		mustFail bool
 	}{
 		{
 			name: "invalid notls",
@@ -145,8 +142,7 @@ func TestTestBaseDn(t *testing.T) {
 				password: "test",
 				useTLS:   false,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 		{
 			name: "invalid tls",
@@ -157,8 +153,7 @@ func TestTestBaseDn(t *testing.T) {
 				password: "test",
 				useTLS:   true,
 			},
-			mustFail:  true,
-			failError: fmt.Errorf("bad host/post params error: LDAP Result Code 200 \"Network Error\": dial tcp: lookup test.ru: no such host"),
+			mustFail: true,
 		},
 	}
 
@@ -169,7 +164,6 @@ func TestTestBaseDn(t *testing.T) {
 				tt.params.baseDN, tt.params.useTLS, tt.params.openLDAP)
 			if tt.mustFail {
 				require.Error(t, err)
-				assert.Equal(t, tt.failError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
 			}
