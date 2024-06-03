@@ -220,7 +220,7 @@ func TestGetUserInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			conn, err := NewLdapConn(tt.params.user, tt.params.password,
 				tt.params.host, tt.params.port,
-				tt.params.useTLS, LdapConnOptions{openLDAP: tt.params.openLDAP})
+				tt.params.useTLS, LdapConnOptions{OpenLDAP: tt.params.openLDAP})
 			if tt.mustFail {
 				require.Error(t, err)
 			} else {

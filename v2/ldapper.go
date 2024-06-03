@@ -12,7 +12,7 @@ import (
 ////////////////////////////////////////////// LdapConn struct
 
 type LdapConnOptions struct {
-	openLDAP bool
+	OpenLDAP bool
 }
 
 type LdapConn struct {
@@ -92,7 +92,7 @@ func TestBaseDn(userName, passWord,
 	host string, port interface{},
 	baseDn string, useTls, openLdap bool) error {
 
-	conn, err := NewLdapConn(userName, passWord, host, port, useTls, LdapConnOptions{openLDAP: openLdap})
+	conn, err := NewLdapConn(userName, passWord, host, port, useTls, LdapConnOptions{OpenLDAP: openLdap})
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, er
 	var filter string
 	var attributes = make([]string, 0)
 
-	if conn.options.openLDAP {
+	if conn.options.OpenLDAP {
 		filter = fmt.Sprintf(searchFilterUserOpenLDAP, userName)
 		attributes = openLDAPUserAttrs
 	} else {
@@ -166,7 +166,7 @@ func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, er
 			res.Country = entry.GetAttributeValue("co")
 			res.Company = entry.GetAttributeValue("company")
 
-			if conn.options.openLDAP {
+			if conn.options.OpenLDAP {
 				res.Department = entry.GetAttributeValue("departmentNumber")
 				res.Photo = entry.GetAttributeValue("jpegPhoto")
 			} else {
@@ -189,7 +189,7 @@ func (conn *LdapConn) GetGroupUsers(group string) (res []UserShortInfo, err erro
 
 	var filter string
 	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
+	if conn.options.OpenLDAP {
 		filter = filterUserOpenLDAP
 		attributes = openLDAPGroupUserAttrs
 	} else {
@@ -216,7 +216,7 @@ func (conn *LdapConn) GetGroupUsers(group string) (res []UserShortInfo, err erro
 			inf.Mail = entry.GetAttributeValue("mail")
 			inf.Title = entry.GetAttributeValue("title")
 
-			if conn.options.openLDAP {
+			if conn.options.OpenLDAP {
 				inf.Login = entry.GetAttributeValue("uid")
 				inf.Department = entry.GetAttributeValue("departmentNumber")
 			} else {
@@ -273,7 +273,7 @@ func (conn *LdapConn) GetRootGroups(baseDn string) (res []GroupInfo, err error) 
 	res = make([]GroupInfo, 0)
 
 	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
+	if conn.options.OpenLDAP {
 		attributes = openLDAPGroupAttrs
 	} else {
 		attributes = ADGroupAttrs
@@ -297,7 +297,7 @@ func (conn *LdapConn) GetRootGroups(baseDn string) (res []GroupInfo, err error) 
 
 		inf.Ou = entry.GetAttributeValue("ou")
 
-		if conn.options.openLDAP {
+		if conn.options.OpenLDAP {
 			inf.Name = inf.Ou
 			inf.DName = entry.DN
 		} else {
@@ -316,7 +316,7 @@ func (conn *LdapConn) GetSubGroups(group string, level int) (res []GroupInfo, er
 	res = make([]GroupInfo, 0)
 
 	var attributes = make([]string, 0)
-	if conn.options.openLDAP {
+	if conn.options.OpenLDAP {
 		attributes = openLDAPGroupAttrs
 	} else {
 		attributes = ADGroupAttrs
@@ -339,7 +339,7 @@ func (conn *LdapConn) GetSubGroups(group string, level int) (res []GroupInfo, er
 		var inf GroupInfo
 		inf.Ou = entry.GetAttributeValue("ou")
 
-		if conn.options.openLDAP {
+		if conn.options.OpenLDAP {
 			inf.Name = inf.Ou
 			inf.DName = entry.DN
 		} else {
