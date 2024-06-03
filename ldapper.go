@@ -12,7 +12,7 @@ import (
 ////////////////////////////////////////////// LdapConn struct
 
 type LdapConnOptions struct {
-	openLDAP bool
+	OpenLDAP bool
 }
 
 type LdapConn struct {
@@ -92,7 +92,7 @@ func TestBaseDn(userName, passWord,
 	host string, port interface{},
 	baseDn string, useTls, openLdap bool) error {
 
-	conn, err := NewLdapConn(userName, passWord, host, port, useTls, LdapConnOptions{openLDAP: openLdap})
+	conn, err := NewLdapConn(userName, passWord, host, port, useTls, LdapConnOptions{OpenLDAP: openLdap})
 	if err != nil {
 		return err
 	}
