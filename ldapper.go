@@ -69,6 +69,7 @@ func NewLdapConn(userName, passWord,
 	}, nil
 }
 
+// NewLdapConnWithTLSConfig - create new conn with passed tls config
 func NewLdapConnWithTLSConfig(userName, passWord,
 	host string, port interface{},
 	tlsCfg *tls.Config, options ...LdapConnOptions) (*LdapConn, error) {
