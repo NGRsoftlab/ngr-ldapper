@@ -25,6 +25,7 @@ type LdapConn struct {
 	Connection *ldap.Conn
 }
 
+// NewLdapConn - create new conn (with InsecureSkipVerify: true)
 func NewLdapConn(userName, passWord,
 	host string, port interface{},
 	useTls bool, options ...LdapConnOptions) (*LdapConn, error) {
@@ -66,6 +67,48 @@ func NewLdapConn(userName, passWord,
 	}, nil
 }
 
+// NewLdapConnWithTLSConfig - create new conn with passed tls config
+func NewLdapConnWithTLSConfig(userName, passWord,
+	host string, port interface{},
+	tlsCfg *tls.Config, options ...LdapConnOptions) (*LdapConn, error) {
+
+	var uri string
+	var conn *ldap.Conn
+	var err error
+	uri = fmt.Sprintf("ldap://%s:%v", host, port)
+
+	if tlsCfg == nil {
+		return nil, fmt.Errorf("passed nil tls config")
+	}
+
+	uri = fmt.Sprintf("ldaps://%s:%v", host, port)
+	conn, err = ldap.DialURL(uri, ldap.DialWithTLSConfig(tlsCfg))
+	if err != nil {
+		return nil, fmt.Errorf("bad host/post params error: %s", err.Error())
+	}
+
+	err = conn.Bind(userName, passWord)
+	if err != nil {
+		return nil, fmt.Errorf("bad credential params error: %s", err.Error())
+	}
+
+	var connOptions LdapConnOptions
+	if len(options) > 0 {
+		// set only 1st options object
+		connOptions = options[0]
+	}
+
+	return &LdapConn{
+		host:       host,
+		port:       port,
+		user:       userName,
+		password:   passWord,
+		useTLS:     true,
+		options:    connOptions,
+		Connection: conn,
+	}, nil
+}
+
 func (conn *LdapConn) Close() {
 	if conn.Connection != nil {
 		err := conn.Connection.Close()
@@ -77,7 +120,7 @@ func (conn *LdapConn) Close() {
 
 ////////////////////////////////////////////// Conn tests
 
-// TryAccess Test auth in AD
+// TryAccess Test auth in AD (conn with InsecureSkipVerify: true)
 func TryAccess(userName, passWord,
 	host string, port interface{},
 	useTls bool) error {
@@ -87,7 +130,17 @@ func TryAccess(userName, passWord,
 	return err
 }
 
-// TestBaseDn Test search in AD baseDn path
+// TryAccessWithTLSConfig Test auth in AD with passed tls config
+func TryAccessWithTLSConfig(userName, passWord,
+	host string, port interface{},
+	tlsCfg *tls.Config) error {
+
+	_, err := NewLdapConnWithTLSConfig(userName, passWord, host, port, tlsCfg)
+
+	return err
+}
+
+// TestBaseDn Test search in AD baseDn path (conn with InsecureSkipVerify: true)
 func TestBaseDn(userName, passWord,
 	host string, port interface{},
 	baseDn string, useTls, openLdap bool) error {
@@ -126,8 +179,48 @@ func TestBaseDn(userName, passWord,
 	return nil
 }
 
+// TestBaseDnWithTLSConfig Test search in AD baseDn path with passed tls config
+func TestBaseDnWithTLSConfig(userName, passWord,
+	host string, port interface{},
+	baseDn string, tlsCfg *tls.Config, openLdap bool) error {
+
+	conn, err := NewLdapConnWithTLSConfig(userName, passWord, host, port, tlsCfg, LdapConnOptions{OpenLDAP: openLdap})
+	if err != nil {
+		return err
+	}
+	defer func() { conn.Close() }()
+
+	filter := filterGroup
+
+	searchRequest := ldap.NewSearchRequest(
+		baseDn,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		testBaseDNAttr,
+		nil,
+	)
+
+	searchResult, err := conn.Connection.Search(searchRequest)
+	if err != nil {
+		return fmt.Errorf("bad base_dn param: %s", err.Error())
+	}
+
+	var cn interface{}
+	for _, entry := range searchResult.Entries {
+		cn = entry.GetAttributeValue("cn")
+		break
+	}
+
+	if cn == nil {
+		return fmt.Errorf("bad base_dn param: no cn")
+	}
+
+	return nil
+}
+
 ////////////////////////////////////////////// Get info methods
 
+// GetUserInfo - get user info
 func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, err error) {
 	var filter string
 	var attributes = make([]string, 0)
@@ -184,6 +277,7 @@ func (conn *LdapConn) GetUserInfo(userName, baseDn string) (res UserFullInfo, er
 	return res, err
 }
 
+// GetGroupUsers
 func (conn *LdapConn) GetGroupUsers(group string) (res []UserShortInfo, err error) {
 	res = make([]UserShortInfo, 0)
 
